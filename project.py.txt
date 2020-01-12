@@ -1,0 +1,194 @@
+#%%
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+import sklearn
+import sys
+import os
+os.chdir('E:/College/CSE/SUMMER TRAINING/BIG DATA/Data Sets/titanic')
+os.getcwd()      #current working directory
+
+#%%
+df = pd.read_csv('train.csv')
+df.head()
+
+#%%
+df.isnull().sum()
+
+#%%
+df.describe()
+
+#%%
+sns.scatterplot(x='Age', y='Fare', data=df,alpha=0.7)
+#x-independent variable
+#y-dependent variable
+#plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/Scatter.png",dpi=400)
+
+#%%
+sns.boxplot(x=df['Age'],orient='v')
+#plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/boxplotage_out.png",dpi=400)
+
+#%%
+sns.distplot(df['Age'].dropna(), hist = False, kde = True)
+#plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/hist_out.png",dpi=400)
+#%%
+sns.boxplot(x=df['Fare'],orient='h')
+#plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/boxplot_out.png",dpi=400)
+
+#%%
+sns.distplot(df['Fare'].dropna(), hist = False, kde = True)
+#plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/histfare_out.png",dpi=400)
+
+#%%
+out=df['Age'].where(df['Age']>=79)
+print(out.dropna())
+
+#%%
+df.loc[630]
+
+
+#%%
+df.drop(630,axis=0,inplace=True)
+
+
+#%%
+out=df['Fare'].where(df['Fare']>=300)
+print(out.dropna())
+
+#%%
+df.drop(258,axis=0,inplace=True)
+df.drop(679,axis=0,inplace=True)
+df.drop(737,axis=0,inplace=True)
+
+#%%
+sns.scatterplot(x='Age', y='Fare', data=df,alpha=0.7)
+plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/check after drop_out.png",dpi=400)
+
+
+#%%
+sns.factorplot(x='Age',col='Sex',row='Survived',data=df, kind='violin',size=3,orient='v')
+plt.savefig("E:/College/CSE/SUMMER TRAINING/DATA SCIENCE/Data science project/factorplot.png",dpi=400)
+#%%
+df['Sex'].value_counts()
+
+#%%
+split = StratifiedShuffleSplit(n_splits=1, random_state=12, test_size=0.2)
+for train_index, test_index in split.split(df,df['Sex']):
+    df_train = df.loc[train_index]
+    df_test = df.loc[test_index]
+
+#%%
+df_train['Sex'].value_counts()
+
+#%%
+df_test['Sex'].value_counts()
+
+#%%
+df_train.head()
+
+#%%
+df_test.head()
+
+#%%
+def new_var(df):
+    df['Family'] = df['SibSp'] + df['Parch']
+    return df
+
+df_train = new_var(df_train)
+df_test = new_var(df_test)
+
+#%%
+df_train.columns
+df_test.columns
+#%%
+df_train.isnull().sum()
+
+#%%
+df_train.describe()
+
+#%%
+def age(df):
+    df['Age'].fillna(29,inplace = True)  #to fill null values
+    #mean parameter
+    return df
+
+def embarked(df):
+    df['Embarked'].fillna('S',inplace = True)
+    #mode parameter
+    label = LabelEncoder()    #to give labels to categorical variables
+    df['Embarked'] = label.fit_transform(df['Embarked'])
+    return df
+
+def sex(df):
+    label = LabelEncoder()
+    df['Sex'] = label.fit_transform(df['Sex'])
+    return df
+#for removing the columns of no use   
+def drop(df):
+    df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis = 1, inplace = True)
+    return df
+def call(df):
+    df = age(df) 
+    df = embarked(df)
+    df = sex(df)
+    df = drop(df)
+    return df
+
+#%%
+df_train = call(df_train)
+
+#%%
+df_test = call(df_test)
+
+#%%
+df_train.head()
+
+#%%
+df_test.head()
+
+#%%
+#from sklearn.preprocessing import StandardScaler
+#scalar = StandardScaler()
+#df['Age'] = scalar.fit_transform(df['Age'])
+
+#%%
+x_train = df_train.drop(['Survived'],axis=1)
+y_train = df_train['Survived']
+x_test = df_test.drop(['Survived'],axis=1)
+y_test = df_test['Survived']
+
+#%%
+log_model = LogisticRegression()
+log_model.fit(x_train, y_train)
+
+learn=log_model.predict(x_train)   #test on learning data
+learning_score=accuracy_score(y_train, learn)
+print("Model's learning accuracy: ",learning_score)
+
+prediction = log_model.predict(x_test)  #prediction on x-test
+score=accuracy_score(y_test, prediction)
+print("Model score: ",score)
+
+
+#%%
+tree= DecisionTreeClassifier()
+tree.fit(x_train, y_train)
+
+tree_learning=tree.predict(x_train)
+learning_score=accuracy_score(y_train, tree_learning)
+print("Model's learning accuracy : ",learning_score)
+
+tree_prediction=tree.predict(x_test)
+tree_Score=accuracy_score(y_test, tree_prediction)
+print("Model Score : " ,tree_Score)
+
+
+#%%
